@@ -5,14 +5,9 @@ A Btc Block Viewer App based on ArcBlock OCAP Service API.
 
 <div align=left>
 	<img width="300" src="https://github.com/NateRobinson/BBViewer/blob/master/pics/1.png?raw=true"/>
-	<img width="300" src="https://github.com/NateRobinson/BBViewer/blob/master/pics/2.png?raw=true"/>
+	<img style="margin-left:20px;" width="300" src="https://github.com/NateRobinson/BBViewer/blob/master/pics/2.png?raw=true"/>
 </div>
 <div align=left>
 	<img width="300" src="https://github.com/NateRobinson/BBViewer/blob/master/pics/3.png?raw=true"/>
 	<img width="300" src="https://github.com/NateRobinson/BBViewer/blob/master/pics/4.png?raw=true"/>
 </div>
-
-<figure class="half">
-    <img src="https://github.com/NateRobinson/BBViewer/blob/master/pics/3.png?raw=true"/>
-	<img src="https://github.com/NateRobinson/BBViewer/blob/master/pics/4.png?raw=true"/>
-</figure>
