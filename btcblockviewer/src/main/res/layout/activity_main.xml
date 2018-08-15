@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:orientation="vertical"
+    tools:context=".ui.MainActivity">
+
+    <RelativeLayout
+        android:id="@+id/head_rl"
+        android:layout_width="match_parent"
+        android:layout_height="130dp"
+        android:layout_marginTop="10dp">
+
+        <TextView
+            android:id="@+id/title_tv"
+            style="@style/TextView22_black"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:text="Block Height:"
+            android:textStyle="italic"
+            android:transitionName="title_tv"/>
+
+        <ImageView
+            android:id="@+id/help_iv"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/next_and_pre_bg"
+            android:clickable="true"
+            android:padding="10dp"
+            android:src="@mipmap/help"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/title_tv"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:id="@+id/block_height_tv"
+                style="@style/TextView18_black"
+                android:layout_centerHorizontal="true"
+                android:textSize="50sp"
+                android:textStyle="bold"
+                android:transitionName="block_height_tv"
+                tools:text="xxxxxx"/>
+
+            <ImageView
+                android:id="@+id/pre_iv"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/next_and_pre_bg"
+                android:clickable="true"
+                android:padding="10dp"
+                android:src="@mipmap/prev"/>
+
+            <ImageView
+                android:id="@+id/next_iv"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/next_and_pre_bg"
+                android:clickable="true"
+                android:padding="10dp"
+                android:src="@mipmap/next"/>
+
+        </RelativeLayout>
+
+
+    </RelativeLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/blocks_rv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+
+    <LinearLayout
+        android:id="@+id/about_us_ll"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@drawable/view_more_bg"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/about_icon"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:src="@mipmap/about"
+            android:tint="@color/txt_gray"
+            android:transitionName="about_icon"/>
+
+        <TextView
+            android:id="@+id/about_tv"
+            style="@style/TextView16_gray"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="About Us"
+            android:transitionName="about_tv"/>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,15 @@
+query transactionsOfBlock($blockHeight:Int!,$paging:PageInput){
+  transactionsByIndex(blockHeight: $blockHeight,paging:$paging) {
+    data {
+      index
+      hash
+      total
+      size
+    }
+    page{
+      next
+      cursor
+      total
+    }
+  }
+}
