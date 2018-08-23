@@ -115,7 +115,7 @@ public class BlockTxsActivity extends AppCompatActivity {
 		//	1.1 set initial query
 		//  1.2 set loadmore query
 		//  1.3 set refresh query
-		CoreKitPagedHelper coreKitPagedHelper = new CoreKitPagedHelper() {
+		final CoreKitPagedHelper coreKitPagedHelper = new CoreKitPagedHelper() {
 
 			@Override
 			public Query getInitialQuery() {

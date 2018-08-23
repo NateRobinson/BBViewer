@@ -28,6 +28,7 @@ import com.apollographql.apollo.response.CustomTypeAdapter;
 import com.apollographql.apollo.response.CustomTypeValue;
 import com.arcblock.btcblockviewer.type.CustomType;
 import com.arcblock.corekit.ABCoreKitClient;
+import com.arcblock.corekit.config.CoreKitConfig;
 import com.facebook.stetho.Stetho;
 
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ public class BtcBlockViewerApp extends Application {
 			}
 		};
 
-		mABCoreClient = ABCoreKitClient.builder(this)
+		mABCoreClient = ABCoreKitClient.builder(this, CoreKitConfig.API_TYPE_BTC)
 				.addCustomTypeAdapter(CustomType.DATETIME, dateCustomTypeAdapter)
 				.setOkHttpClient(okHttpClient)
 				.setDefaultResponseFetcher(ApolloResponseFetchers.CACHE_AND_NETWORK)

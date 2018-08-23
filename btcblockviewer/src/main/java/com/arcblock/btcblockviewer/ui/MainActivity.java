@@ -162,8 +162,8 @@ public class MainActivity extends AppCompatActivity implements ListBlocksAdapter
 			public void onClick(View v) {
 				Intent intent = new Intent(MainActivity.this, AboutUsActivity.class);
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-					Pair<View, String> shareViewOne = new Pair<>(aboutIcon, "about_icon");
-					Pair<View, String> shareViewTwo = new Pair<>(aboutTv, "about_tv");
+					Pair<View, String> shareViewOne = new Pair<>((View)aboutIcon, "about_icon");
+					Pair<View, String> shareViewTwo = new Pair<>((View)aboutTv, "about_tv");
 					ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(MainActivity.this, shareViewOne, shareViewTwo);
 					startActivity(intent, options.toBundle());
 				} else {
@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements ListBlocksAdapter
 		//	1.1 set initial query
 		//  1.2 set loadmore query
 		//  1.3 set refresh query
-		CoreKitPagedHelper coreKitPagedHelper = new CoreKitPagedHelper() {
+		final CoreKitPagedHelper coreKitPagedHelper = new CoreKitPagedHelper() {
 
 			@Override
 			public Query getInitialQuery() {
@@ -288,8 +288,8 @@ public class MainActivity extends AppCompatActivity implements ListBlocksAdapter
 		Intent intent = new Intent(this, BlockTxsActivity.class);
 		intent.putExtra(BlockTxsActivity.BLOCK_HEIGHT_KEY, blockHeight);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			Pair<View, String> shareViewOne = new Pair<>(mBlockHeightTv, "block_height_tv");
-			Pair<View, String> shareViewTwo = new Pair<>(titleTv, "title_tv");
+			Pair<View, String> shareViewOne = new Pair<>((View)mBlockHeightTv, "block_height_tv");
+			Pair<View, String> shareViewTwo = new Pair<>((View)titleTv, "title_tv");
 			ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, shareViewOne, shareViewTwo);
 			startActivity(intent, options.toBundle());
 		} else {

@@ -48,8 +48,8 @@ public class ListBlocksChildAdapter extends BaseQuickAdapter<BlocksByHeightQuery
 	}
 
 	@Override
-	protected void convert(BaseViewHolder helper, BlocksByHeightQuery.Datum1 item) {
-		View childItem = helper.getView(R.id.child_item);
+	protected void convert(BaseViewHolder helper, final BlocksByHeightQuery.Datum1 item) {
+		final View childItem = helper.getView(R.id.child_item);
 
 		if (item.getSize() < 100) {
 			childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_one);

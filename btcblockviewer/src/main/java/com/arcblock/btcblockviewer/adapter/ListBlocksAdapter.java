@@ -56,7 +56,7 @@ public class ListBlocksAdapter extends BaseQuickAdapter<BlocksByHeightQuery.Datu
 	}
 
 	@Override
-	protected void convert(BaseViewHolder helper, BlocksByHeightQuery.Datum item) {
+	protected void convert(BaseViewHolder helper, final BlocksByHeightQuery.Datum item) {
 		TextView emptyTv = helper.getView(R.id.empty_tv);
 		RecyclerView childRcv = helper.getView(R.id.child_rcv);
 		LinearLayout contentLl = helper.getView(R.id.content_ll);
@@ -78,9 +78,6 @@ public class ListBlocksAdapter extends BaseQuickAdapter<BlocksByHeightQuery.Datu
 					if (mOnViewMoreClickListener!=null) {
 						mOnViewMoreClickListener.onViewMoreClick(item.getHeight());
 					}
-//					Intent intent = new Intent(mContext, BlockTxsActivity.class);
-//					intent.putExtra(BlockTxsActivity.BLOCK_HEIGHT_KEY, item.getHeight());
-//					mContext.startActivity(intent);
 				}
 			});
 

@@ -1,5 +1,6 @@
 # BBViewer
-A Btc Block Viewer App based on ArcBlock OCAP Service API.
+
+A BTC Block Viewer App based on ArcBlock Android SDK .
 
 ## Screenshots
 
@@ -19,3 +20,5 @@ A Btc Block Viewer App based on ArcBlock OCAP Service API.
 		<img width="300" src="https://github.com/NateRobinson/BBViewer/blob/master/pics/4.png?raw=true"/>
 	</kbd>
 </div>
+
+

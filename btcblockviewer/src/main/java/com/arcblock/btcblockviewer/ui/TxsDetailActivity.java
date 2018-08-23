@@ -22,7 +22,6 @@
 package com.arcblock.btcblockviewer.ui;
 
 import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Outline;
 import android.graphics.Rect;
 import android.os.Build;
@@ -141,9 +140,9 @@ public class TxsDetailActivity extends AppCompatActivity {
 		// 2. init query
 		TransactionByHashQuery query = TransactionByHashQuery.builder().hash(txsHash).build();
 		// 3. viewmodel factory
-		CoreKitViewModel.CustomClientFactory factory = new CoreKitViewModel.CustomClientFactory(mapper, BtcBlockViewerApp.getInstance().abCoreKitClient());
+		CoreKitViewModel.CustomClientFactory factory = new CoreKitViewModel.CustomClientFactory(query, mapper, BtcBlockViewerApp.getInstance().abCoreKitClient());
 		// 4. viewmodel init
-		mTransactionByHashCoreKitViewModel = ViewModelProviders.of(this, factory).get(CoreKitViewModel.class);
+		mTransactionByHashCoreKitViewModel = CoreKitViewModel.getInstance(this, factory);
 		mTransactionByHashCoreKitViewModel.getQueryData(query).observe(this, new Observer<CoreKitBean<TransactionByHashQuery.TransactionByHash>>() {
 			@Override
 			public void onChanged(@Nullable CoreKitBean<TransactionByHashQuery.TransactionByHash> transactionByHashCoreKitBean) {

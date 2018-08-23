@@ -52,8 +52,8 @@ public class TxsAdapter extends BaseQuickAdapter<TransactionsOfBlockQuery.Datum,
 	}
 
 	@Override
-	protected void convert(BaseViewHolder helper, TransactionsOfBlockQuery.Datum item) {
-		View childItem = helper.getView(R.id.child_item);
+	protected void convert(BaseViewHolder helper, final TransactionsOfBlockQuery.Datum item) {
+		final View childItem = helper.getView(R.id.child_item);
 
 		if (item.getSize() < 100) {
 			childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_one);
