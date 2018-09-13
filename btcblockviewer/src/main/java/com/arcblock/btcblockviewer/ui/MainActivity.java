@@ -21,13 +21,14 @@
  */
 package com.arcblock.btcblockviewer.ui;
 
+import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.util.DiffUtil;
@@ -49,12 +50,11 @@ import com.arcblock.btcblockviewer.R;
 import com.arcblock.btcblockviewer.adapter.ListBlocksAdapter;
 import com.arcblock.btcblockviewer.type.PageInput;
 import com.arcblock.btcblockviewer.utils.StatusBarUtils;
+import com.arcblock.corekit.ABCoreKitClient;
+import com.arcblock.corekit.CoreKitPagedQuery;
 import com.arcblock.corekit.bean.CoreKitBean;
 import com.arcblock.corekit.bean.CoreKitPagedBean;
-import com.arcblock.corekit.utils.CoreKitBeanMapper;
 import com.arcblock.corekit.utils.CoreKitDiffUtil;
-import com.arcblock.corekit.utils.CoreKitPagedHelper;
-import com.arcblock.corekit.viewmodel.CoreKitPagedViewModel;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 
 import java.util.ArrayList;
@@ -62,238 +62,239 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements ListBlocksAdapter.OnViewMoreClickListener {
 
-	private RecyclerView mBlocksRv;
-	private TextView mBlockHeightTv;
-	private TextView titleTv;
-	private ImageView nextIv;
-	private ImageView preIv;
-	private ImageView aboutIcon;
-	private TextView aboutTv;
+    private RecyclerView mBlocksRv;
+    private TextView mBlockHeightTv;
+    private TextView titleTv;
+    private ImageView nextIv;
+    private ImageView preIv;
+    private ImageView aboutIcon;
+    private TextView aboutTv;
 
-	private ListBlocksAdapter mListBlocksAdapter;
+    private ListBlocksAdapter mListBlocksAdapter;
 
-	private List<BlocksByHeightQuery.Datum> mBlocks = new ArrayList<>();
-	private CoreKitPagedViewModel<BlocksByHeightQuery.Data, BlocksByHeightQuery.Datum> mBlocksByHeightQueryViewModel;
-	private int startIndex = 448244;
-	private int endIndex = 448344;
+    private List<BlocksByHeightQuery.Datum> mBlocks = new ArrayList<>();
+    private int startIndex = 448244;
+    private int endIndex = 448344;
 
-	private int currentPosi = 0;
+    private int currentPosi = 0;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+    private BlocksByHeightQueryHelper mBlocksByHeightQueryHelper;
 
-		this.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-		this.getWindow().setBackgroundDrawableResource(R.color.transparent);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-		StatusBarUtils.MIUISetStatusBarLightMode(this.getWindow(), false);
-		StatusBarUtils.FlymeSetStatusBarLightMode(this.getWindow(), false);
+        this.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        this.getWindow().setBackgroundDrawableResource(R.color.transparent);
 
-		setContentView(R.layout.activity_main);
+        StatusBarUtils.MIUISetStatusBarLightMode(this.getWindow(), false);
+        StatusBarUtils.FlymeSetStatusBarLightMode(this.getWindow(), false);
 
-		initView();
-		initData();
-	}
+        setContentView(R.layout.activity_main);
 
-	private void initView() {
+        initView();
+        initData();
+    }
 
-		RelativeLayout headRl = findViewById(R.id.head_rl);
-		mBlockHeightTv = findViewById(R.id.block_height_tv);
-		titleTv = findViewById(R.id.title_tv);
-		nextIv = findViewById(R.id.next_iv);
-		preIv = findViewById(R.id.pre_iv);
-		aboutIcon = findViewById(R.id.about_icon);
-		aboutTv = findViewById(R.id.about_tv);
+    private void initView() {
 
-		mBlocksRv = (RecyclerView) findViewById(R.id.blocks_rv);
-		mBlocksRv.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        RelativeLayout headRl = findViewById(R.id.head_rl);
+        mBlockHeightTv = findViewById(R.id.block_height_tv);
+        titleTv = findViewById(R.id.title_tv);
+        nextIv = findViewById(R.id.next_iv);
+        preIv = findViewById(R.id.pre_iv);
+        aboutIcon = findViewById(R.id.about_icon);
+        aboutTv = findViewById(R.id.about_tv);
 
-		LinearSnapHelper linearSnapHelper = new LinearSnapHelper();
+        mBlocksRv = (RecyclerView) findViewById(R.id.blocks_rv);
+        mBlocksRv.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
-		mListBlocksAdapter = new ListBlocksAdapter(R.layout.item_list_blocks, mBlocks, this);
-		mListBlocksAdapter.setOnLoadMoreListener(new BaseQuickAdapter.RequestLoadMoreListener() {
-			@Override
-			public void onLoadMoreRequested() {
-				mBlocksByHeightQueryViewModel.loadMore();
-			}
-		}, mBlocksRv);
-		mListBlocksAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-			@Override
-			public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+        LinearSnapHelper linearSnapHelper = new LinearSnapHelper();
 
-			}
-		});
-		mBlocksRv.setAdapter(mListBlocksAdapter);
+        mListBlocksAdapter = new ListBlocksAdapter(R.layout.item_list_blocks, mBlocks, this);
+        mListBlocksAdapter.setOnLoadMoreListener(new BaseQuickAdapter.RequestLoadMoreListener() {
+            @Override
+            public void onLoadMoreRequested() {
+                mBlocksByHeightQueryHelper.loadMore();
+            }
+        }, mBlocksRv);
+        mListBlocksAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
 
-		mBlocksRv.addOnScrollListener(new RecyclerView.OnScrollListener() {
-			@Override
-			public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-				super.onScrollStateChanged(recyclerView, newState);
-				if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-					if (getCurrentItem() >= 0 && getCurrentItem() < mBlocks.size()) {
-						mBlockHeightTv.setText(mBlocks.get(getCurrentItem()).getHeight() + "");
-						currentPosi = getCurrentItem();
-						refreshNextAndPre();
-					}
-				}
-			}
-		});
+            }
+        });
+        mBlocksRv.setAdapter(mListBlocksAdapter);
 
-		linearSnapHelper.attachToRecyclerView(mBlocksRv);
+        mBlocksRv.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (getCurrentItem() >= 0 && getCurrentItem() < mBlocks.size()) {
+                        mBlockHeightTv.setText(mBlocks.get(getCurrentItem()).getHeight() + "");
+                        currentPosi = getCurrentItem();
+                        refreshNextAndPre();
+                    }
+                }
+            }
+        });
 
-		nextIv.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mBlocksRv.smoothScrollToPosition(currentPosi + 1);
-			}
-		});
+        linearSnapHelper.attachToRecyclerView(mBlocksRv);
 
-		preIv.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mBlocksRv.smoothScrollToPosition(currentPosi - 1);
-			}
-		});
+        nextIv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBlocksRv.smoothScrollToPosition(currentPosi + 1);
+            }
+        });
 
-		refreshNextAndPre();
+        preIv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBlocksRv.smoothScrollToPosition(currentPosi - 1);
+            }
+        });
 
-		findViewById(R.id.about_us_ll).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Intent intent = new Intent(MainActivity.this, AboutUsActivity.class);
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-					Pair<View, String> shareViewOne = new Pair<>((View)aboutIcon, "about_icon");
-					Pair<View, String> shareViewTwo = new Pair<>((View)aboutTv, "about_tv");
-					ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(MainActivity.this, shareViewOne, shareViewTwo);
-					startActivity(intent, options.toBundle());
-				} else {
-					startActivity(intent);
-				}
-			}
-		});
+        refreshNextAndPre();
 
-		findViewById(R.id.help_iv).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				new MaterialDialog.Builder(MainActivity.this)
-						.title("Description")
-						.customView(R.layout.dialog_desc, true)
-						.positiveText("Ok")
-						.show();
-			}
-		});
-	}
+        findViewById(R.id.about_us_ll).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, AboutUsActivity.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    Pair<View, String> shareViewOne = new Pair<>((View) aboutIcon, "about_icon");
+                    Pair<View, String> shareViewTwo = new Pair<>((View) aboutTv, "about_tv");
+                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(MainActivity.this, shareViewOne, shareViewTwo);
+                    startActivity(intent, options.toBundle());
+                } else {
+                    startActivity(intent);
+                }
+            }
+        });
 
-	private void refreshNextAndPre() {
-		preIv.setVisibility(View.VISIBLE);
-		nextIv.setVisibility(View.VISIBLE);
-		if (currentPosi == 0) {
-			preIv.setVisibility(View.INVISIBLE);
-		}
-		if (currentPosi == mBlocks.size() - 1) {
-			nextIv.setVisibility(View.INVISIBLE);
-		}
-	}
+        findViewById(R.id.help_iv).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new MaterialDialog.Builder(MainActivity.this)
+                        .title("Description")
+                        .customView(R.layout.dialog_desc, true)
+                        .positiveText("Ok")
+                        .show();
+            }
+        });
+    }
 
-	private int getCurrentItem() {
-		return ((LinearLayoutManager) mBlocksRv.getLayoutManager())
-				.findFirstVisibleItemPosition();
-	}
+    private void refreshNextAndPre() {
+        preIv.setVisibility(View.VISIBLE);
+        nextIv.setVisibility(View.VISIBLE);
+        if (currentPosi == 0) {
+            preIv.setVisibility(View.INVISIBLE);
+        }
+        if (currentPosi == mBlocks.size() - 1) {
+            nextIv.setVisibility(View.INVISIBLE);
+        }
+    }
 
-	private void initData() {
+    private int getCurrentItem() {
+        return ((LinearLayoutManager) mBlocksRv.getLayoutManager())
+                .findFirstVisibleItemPosition();
+    }
 
-		mBlockHeightTv.setText(startIndex + "");
-		//1.init a corekitpagedhelper
-		//	1.1 set initial query
-		//  1.2 set loadmore query
-		//  1.3 set refresh query
-		final CoreKitPagedHelper coreKitPagedHelper = new CoreKitPagedHelper() {
+    private void initData() {
 
-			@Override
-			public Query getInitialQuery() {
-				return BlocksByHeightQuery.builder().fromHeight(startIndex).toHeight(endIndex).build();
-			}
+        mBlockHeightTv.setText(startIndex + "");
 
-			@Override
-			public Query getLoadMoreQuery() {
-				PageInput pageInput = null;
-				if (!TextUtils.isEmpty(getCursor())) {
-					pageInput = PageInput.builder().cursor(getCursor()).build();
-				}
-				return BlocksByHeightQuery.builder().fromHeight(startIndex).toHeight(endIndex).paging(pageInput).build();
-			}
+        // init BlocksByHeightQueryHelper
+        mBlocksByHeightQueryHelper = new BlocksByHeightQueryHelper(this,this,BtcBlockViewerApp.getInstance().abCoreKitClient());
+        mBlocksByHeightQueryHelper.setObserve(new Observer<CoreKitPagedBean<List<BlocksByHeightQuery.Datum>>>() {
+            @Override
+            public void onChanged(@Nullable CoreKitPagedBean<List<BlocksByHeightQuery.Datum>> coreKitPagedBean) {
+                //1. handle return data
+                if (coreKitPagedBean.getStatus() == CoreKitBean.SUCCESS_CODE) {
+                    if (coreKitPagedBean.getData() != null) {
+                        // new a old list
+                        List<com.arcblock.btcblockviewer.BlocksByHeightQuery.Datum> oldList = new ArrayList<>();
+                        oldList.addAll(mBlocks);
 
-			@Override
-			public Query getRefreshQuery() {
-				return BlocksByHeightQuery.builder().fromHeight(startIndex).toHeight(endIndex).build();
-			}
-		};
+                        // set mBlocks with new data
+                        mBlocks = coreKitPagedBean.getData();
+                        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new CoreKitDiffUtil<>(oldList, mBlocks), true);
+                        // need this line , otherwise the update will have no effect
+                        mListBlocksAdapter.setNewListData(mBlocks);
+                        result.dispatchUpdatesTo(mListBlocksAdapter);
 
-		//2. init data mapper
-		CoreKitBeanMapper<Response<BlocksByHeightQuery.Data>, List<BlocksByHeightQuery.Datum>> blocksMapper = new CoreKitBeanMapper<Response<BlocksByHeightQuery.Data>, List<BlocksByHeightQuery.Datum>>() {
+                        refreshNextAndPre();
+                    }
+                }
 
-			@Override
-			public List<BlocksByHeightQuery.Datum> map(Response<BlocksByHeightQuery.Data> dataResponse) {
-				if (dataResponse != null && dataResponse.data().getBlocksByHeight() != null) {
-					// set page info to CoreKitPagedHelper
-					if (dataResponse.data().getBlocksByHeight().getPage() != null) {
-						// set is have next flag to CoreKitPagedHelper
-						coreKitPagedHelper.setHasMore(dataResponse.data().getBlocksByHeight().getPage().isNext());
-						// set new cursor to CoreKitPagedHelper
-						coreKitPagedHelper.setCursor(dataResponse.data().getBlocksByHeight().getPage().getCursor());
-					}
-					return dataResponse.data().getBlocksByHeight().getData();
-				}
-				return null;
-			}
-		};
+                //2. view status change and loadMore component need
+                if (mBlocksByHeightQueryHelper.isHasMore()) {
+                    mListBlocksAdapter.setEnableLoadMore(true);
+                    mListBlocksAdapter.loadMoreComplete();
+                } else {
+                    mListBlocksAdapter.loadMoreEnd();
+                }
+            }
+        });
+    }
 
-		//3. init the ViewModel with CustomClientFactory
-		CoreKitPagedViewModel.CustomClientFactory factory = new CoreKitPagedViewModel.CustomClientFactory(blocksMapper, coreKitPagedHelper, BtcBlockViewerApp.getInstance().abCoreKitClient());
-		mBlocksByHeightQueryViewModel = ViewModelProviders.of(this, factory).get(CoreKitPagedViewModel.class);
-		mBlocksByHeightQueryViewModel.getCleanQueryData().observe(this, new Observer<CoreKitPagedBean<List<BlocksByHeightQuery.Datum>>>() {
-			@Override
-			public void onChanged(@Nullable CoreKitPagedBean<List<BlocksByHeightQuery.Datum>> coreKitPagedBean) {
-				//1. handle return data
-				if (coreKitPagedBean.getStatus() == CoreKitBean.SUCCESS_CODE) {
-					if (coreKitPagedBean.getData() != null) {
-						// new a old list
-						List<BlocksByHeightQuery.Datum> oldList = new ArrayList<>();
-						oldList.addAll(mBlocks);
+    @Override
+    public void onViewMoreClick(int blockHeight) {
+        Intent intent = new Intent(this, BlockTxsActivity.class);
+        intent.putExtra(BlockTxsActivity.BLOCK_HEIGHT_KEY, blockHeight);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            Pair<View, String> shareViewOne = new Pair<>((View) mBlockHeightTv, "block_height_tv");
+            Pair<View, String> shareViewTwo = new Pair<>((View) titleTv, "title_tv");
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, shareViewOne, shareViewTwo);
+            startActivity(intent, options.toBundle());
+        } else {
+            startActivity(intent);
+        }
+    }
 
-						// set mBlocks with new data
-						mBlocks = coreKitPagedBean.getData();
-						DiffUtil.DiffResult result = DiffUtil.calculateDiff(new CoreKitDiffUtil<>(oldList, mBlocks), true);
-						// need this line , otherwise the update will have no effect
-						mListBlocksAdapter.setNewListData(mBlocks);
-						result.dispatchUpdatesTo(mListBlocksAdapter);
+    /**
+     * BlocksByHeightQueryHelper for BlocksByHeightQuery
+     */
+    private class BlocksByHeightQueryHelper extends CoreKitPagedQuery<BlocksByHeightQuery.Data,BlocksByHeightQuery.Datum>{
 
-						refreshNextAndPre();
-					}
-				}
+        public BlocksByHeightQueryHelper(FragmentActivity activity, LifecycleOwner lifecycleOwner, ABCoreKitClient client) {
+            super(activity, lifecycleOwner, client);
+        }
 
-				//2. view status change and loadMore component need
-				if (coreKitPagedHelper.isHasMore()) {
-					mListBlocksAdapter.setEnableLoadMore(true);
-					mListBlocksAdapter.loadMoreComplete();
-				} else {
-					mListBlocksAdapter.loadMoreEnd();
-				}
-			}
-		});
-	}
+        @Override
+        public List<BlocksByHeightQuery.Datum> map(Response<BlocksByHeightQuery.Data> dataResponse) {
+            if (dataResponse != null && dataResponse.data().getBlocksByHeight() != null) {
+                // set page info to CoreKitPagedHelper
+                if (dataResponse.data().getBlocksByHeight().getPage() != null) {
+                    // set is have next flag to CoreKitPagedHelper
+                    setHasMore(dataResponse.data().getBlocksByHeight().getPage().isNext());
+                    // set new cursor to CoreKitPagedHelper
+                    setCursor(dataResponse.data().getBlocksByHeight().getPage().getCursor());
+                }
+                return dataResponse.data().getBlocksByHeight().getData();
+            }
+            return null;
+        }
 
-	@Override
-	public void onViewMoreClick(int blockHeight) {
-		Intent intent = new Intent(this, BlockTxsActivity.class);
-		intent.putExtra(BlockTxsActivity.BLOCK_HEIGHT_KEY, blockHeight);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			Pair<View, String> shareViewOne = new Pair<>((View)mBlockHeightTv, "block_height_tv");
-			Pair<View, String> shareViewTwo = new Pair<>((View)titleTv, "title_tv");
-			ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, shareViewOne, shareViewTwo);
-			startActivity(intent, options.toBundle());
-		} else {
-			startActivity(intent);
-		}
-	}
+        @Override
+        public Query getInitialQuery() {
+            return BlocksByHeightQuery.builder().fromHeight(startIndex).toHeight(endIndex).build();
+        }
+
+        @Override
+        public Query getLoadMoreQuery() {
+            PageInput pageInput = null;
+            if (!TextUtils.isEmpty(getCursor())) {
+                pageInput = PageInput.builder().cursor(getCursor()).build();
+            }
+            return BlocksByHeightQuery.builder().fromHeight(startIndex).toHeight(endIndex).paging(pageInput).build();
+        }
+
+        @Override
+        public Query getRefreshQuery() {
+            return BlocksByHeightQuery.builder().fromHeight(startIndex).toHeight(endIndex).build();
+        }
+    }
+
 }

@@ -43,68 +43,68 @@ import com.chad.library.adapter.base.BaseViewHolder;
 import java.util.List;
 
 public class TxsAdapter extends BaseQuickAdapter<TransactionsOfBlockQuery.Datum, BaseViewHolder> {
-	public TxsAdapter(int layoutResId, @Nullable List<TransactionsOfBlockQuery.Datum> data) {
-		super(layoutResId, data);
-	}
+    public TxsAdapter(int layoutResId, @Nullable List<TransactionsOfBlockQuery.Datum> data) {
+        super(layoutResId, data);
+    }
 
-	public void setNewListData(List<TransactionsOfBlockQuery.Datum> newList) {
-		this.mData = newList;
-	}
+    public void setNewListData(List<TransactionsOfBlockQuery.Datum> newList) {
+        this.mData = newList;
+    }
 
-	@Override
-	protected void convert(BaseViewHolder helper, final TransactionsOfBlockQuery.Datum item) {
-		final View childItem = helper.getView(R.id.child_item);
+    @Override
+    protected void convert(BaseViewHolder helper, final TransactionsOfBlockQuery.Datum item) {
+        final View childItem = helper.getView(R.id.child_item);
 
-		if (item.getSize() < 100) {
-			childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_one);
-		} else if (item.getSize() < 200) {
-			childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_two);
-		} else if (item.getSize() < 500) {
-			childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_three);
-		} else if (item.getSize() < 1000) {
-			childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_four);
-		} else {
-			childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_five);
-		}
+        if (item.getSize() < 100) {
+            childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_one);
+        } else if (item.getSize() < 200) {
+            childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_two);
+        } else if (item.getSize() < 500) {
+            childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_three);
+        } else if (item.getSize() < 1000) {
+            childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_four);
+        } else {
+            childItem.setBackgroundResource(R.drawable.item_list_blocks_child_view_bg_five);
+        }
 
-		int width = ScreenUtils.getScreenWidth();
-		int itemWidth = (width - 12 * ConvertUtils.dp2px(10)) / 5;
-		int itemHeight = itemWidth;
+        int width = ScreenUtils.getScreenWidth();
+        int itemWidth = (width - 12 * ConvertUtils.dp2px(10)) / 5;
+        int itemHeight = itemWidth;
 
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(itemWidth, itemHeight);
-		params.setMargins(ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10));
-		childItem.setLayoutParams(params);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(itemWidth, itemHeight);
+        params.setMargins(ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10));
+        childItem.setLayoutParams(params);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			childItem.setOutlineProvider(new ViewOutlineProvider() {
-				@Override
-				public void getOutline(View view, Outline outline) {
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-						outline.setRoundRect(new Rect(0, 0, view.getWidth(), view.getHeight()), ConvertUtils.dp2px(5));
-					}
-				}
-			});
-			childItem.setTranslationZ(ConvertUtils.dp2px(8));
-		}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            childItem.setOutlineProvider(new ViewOutlineProvider() {
+                @Override
+                public void getOutline(View view, Outline outline) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        outline.setRoundRect(new Rect(0, 0, view.getWidth(), view.getHeight()), ConvertUtils.dp2px(5));
+                    }
+                }
+            });
+            childItem.setTranslationZ(ConvertUtils.dp2px(8));
+        }
 
-		childItem.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				childItem.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						Intent intent = new Intent(mContext, TxsDetailActivity.class);
-						intent.putExtra(TxsDetailActivity.TXS_HASH, item.getHash());
-						intent.putExtra(TxsDetailActivity.TXS_SIZE, item.getSize());
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-							ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) mContext, childItem, "txs_bg");
-							mContext.startActivity(intent, options.toBundle());
-						} else {
-							mContext.startActivity(intent);
-						}
-					}
-				});
-			}
-		});
-	}
+        childItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                childItem.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(mContext, TxsDetailActivity.class);
+                        intent.putExtra(TxsDetailActivity.TXS_HASH, item.getHash());
+                        intent.putExtra(TxsDetailActivity.TXS_SIZE, item.getSize());
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) mContext, childItem, "txs_bg");
+                            mContext.startActivity(intent, options.toBundle());
+                        } else {
+                            mContext.startActivity(intent);
+                        }
+                    }
+                });
+            }
+        });
+    }
 }

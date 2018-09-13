@@ -33,25 +33,25 @@ import com.jaeger.library.StatusBarUtil;
 
 public class StartActivity extends AppCompatActivity {
 
-	private Handler mHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			super.handleMessage(msg);
-			Intent intent = new Intent(StartActivity.this, MainActivity.class);
-			startActivity(intent);
-			finish();
-		}
-	};
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Intent intent = new Intent(StartActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        }
+    };
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_start);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_start);
 
-		StatusBarUtil.setColor(this, Color.parseColor("#009688"));
+        StatusBarUtil.setColor(this, Color.parseColor("#009688"));
 
-		mHandler.sendEmptyMessageDelayed(0, 1500);
+        mHandler.sendEmptyMessageDelayed(0, 1500);
 
-	}
+    }
 
 }

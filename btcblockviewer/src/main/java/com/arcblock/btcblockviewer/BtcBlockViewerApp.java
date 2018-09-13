@@ -28,8 +28,6 @@ import com.apollographql.apollo.response.CustomTypeAdapter;
 import com.apollographql.apollo.response.CustomTypeValue;
 import com.arcblock.btcblockviewer.type.CustomType;
 import com.arcblock.corekit.ABCoreKitClient;
-import com.arcblock.corekit.config.CoreKitConfig;
-import com.facebook.stetho.Stetho;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -38,75 +36,61 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 import timber.log.Timber;
+
+import static com.arcblock.corekit.config.CoreKitConfig.ApiType.API_TYPE_BTC;
 
 public class BtcBlockViewerApp extends Application {
 
-	private ABCoreKitClient mABCoreClient;
+    private ABCoreKitClient mABCoreClient;
 
-	public static BtcBlockViewerApp INSTANCE = null;
+    public static BtcBlockViewerApp INSTANCE = null;
 
-	public static BtcBlockViewerApp getInstance() {
-		return INSTANCE;
-	}
+    public static BtcBlockViewerApp getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public void onCreate() {
-		super.onCreate();
+    @Override
+    public void onCreate() {
+        super.onCreate();
 
-		INSTANCE = this;
+        INSTANCE = this;
 
-		Stetho.initializeWithDefaults(this);
-		Timber.plant(new Timber.DebugTree());
+        Timber.plant(new Timber.DebugTree());
 
-		HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-			@Override
-			public void log(String message) {
-				Timber.tag("ABCorekit-Okhttp").d(message);
-			}
-		});
+        CustomTypeAdapter dateCustomTypeAdapter = new CustomTypeAdapter<Date>() {
+            @Override
+            public Date decode(CustomTypeValue value) {
+                try {
+                    SimpleDateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'");
+                    utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));//时区定义并进行时间获取
+                    Date gpsUTCDate = utcFormat.parse(value.value.toString());
+                    return gpsUTCDate;
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
 
-		OkHttpClient okHttpClient = new OkHttpClient.Builder()
-				.addInterceptor(loggingInterceptor)
-				.build();
+            @Override
+            public CustomTypeValue encode(Date value) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'");
+                return new CustomTypeValue.GraphQLString(sdf.format(value));
+            }
+        };
 
-		loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        mABCoreClient = ABCoreKitClient.builder(this, API_TYPE_BTC)
+                .addCustomTypeAdapter(CustomType.DATETIME, dateCustomTypeAdapter)
+                .setOpenOkHttpLog(true)
+                .setDefaultResponseFetcher(ApolloResponseFetchers.CACHE_AND_NETWORK)
+                .build();
+    }
 
-		CustomTypeAdapter dateCustomTypeAdapter = new CustomTypeAdapter<Date>() {
-			@Override
-			public Date decode(CustomTypeValue value) {
-				try {
-					SimpleDateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'");
-					utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));//时区定义并进行时间获取
-					Date gpsUTCDate = utcFormat.parse(value.value.toString());
-					return gpsUTCDate;
-				} catch (ParseException e) {
-					e.printStackTrace();
-				}
-				return null;
-			}
-
-			@Override
-			public CustomTypeValue encode(Date value) {
-				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'");
-				return new CustomTypeValue.GraphQLString(sdf.format(value));
-			}
-		};
-
-		mABCoreClient = ABCoreKitClient.builder(this, CoreKitConfig.API_TYPE_BTC)
-				.addCustomTypeAdapter(CustomType.DATETIME, dateCustomTypeAdapter)
-				.setOkHttpClient(okHttpClient)
-				.setDefaultResponseFetcher(ApolloResponseFetchers.CACHE_AND_NETWORK)
-				.build();
-	}
-
-	@NotNull
-	public ABCoreKitClient abCoreKitClient() {
-		if (mABCoreClient == null) {
-			throw new RuntimeException("Please init corekit first.");
-		}
-		return mABCoreClient;
-	}
+    @NotNull
+    public ABCoreKitClient abCoreKitClient() {
+        if (mABCoreClient == null) {
+            throw new RuntimeException("Please init corekit first.");
+        }
+        return mABCoreClient;
+    }
 }

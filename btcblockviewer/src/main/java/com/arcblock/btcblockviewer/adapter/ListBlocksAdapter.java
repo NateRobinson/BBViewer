@@ -44,77 +44,77 @@ import java.util.List;
 
 public class ListBlocksAdapter extends BaseQuickAdapter<BlocksByHeightQuery.Datum, BaseViewHolder> {
 
-	private OnViewMoreClickListener mOnViewMoreClickListener;
+    private OnViewMoreClickListener mOnViewMoreClickListener;
 
-	public ListBlocksAdapter(int layoutResId, @Nullable List<BlocksByHeightQuery.Datum> data, OnViewMoreClickListener onViewMoreClickListener) {
-		super(layoutResId, data);
-		this.mOnViewMoreClickListener = onViewMoreClickListener;
-	}
+    public ListBlocksAdapter(int layoutResId, @Nullable List<BlocksByHeightQuery.Datum> data, OnViewMoreClickListener onViewMoreClickListener) {
+        super(layoutResId, data);
+        this.mOnViewMoreClickListener = onViewMoreClickListener;
+    }
 
-	public void setNewListData(List<BlocksByHeightQuery.Datum> newList) {
-		this.mData = newList;
-	}
+    public void setNewListData(List<BlocksByHeightQuery.Datum> newList) {
+        this.mData = newList;
+    }
 
-	@Override
-	protected void convert(BaseViewHolder helper, final BlocksByHeightQuery.Datum item) {
-		TextView emptyTv = helper.getView(R.id.empty_tv);
-		RecyclerView childRcv = helper.getView(R.id.child_rcv);
-		LinearLayout contentLl = helper.getView(R.id.content_ll);
+    @Override
+    protected void convert(BaseViewHolder helper, final BlocksByHeightQuery.Datum item) {
+        TextView emptyTv = helper.getView(R.id.empty_tv);
+        RecyclerView childRcv = helper.getView(R.id.child_rcv);
+        LinearLayout contentLl = helper.getView(R.id.content_ll);
 
-		if (item.getTransactions() == null || item.getTransactions().getData() == null || item.getTransactions().getData().isEmpty()) {
-			emptyTv.setVisibility(View.VISIBLE);
-			contentLl.setVisibility(View.GONE);
-		} else {
-			emptyTv.setVisibility(View.GONE);
-			contentLl.setVisibility(View.VISIBLE);
+        if (item.getTransactions() == null || item.getTransactions().getData() == null || item.getTransactions().getData().isEmpty()) {
+            emptyTv.setVisibility(View.VISIBLE);
+            contentLl.setVisibility(View.GONE);
+        } else {
+            emptyTv.setVisibility(View.GONE);
+            contentLl.setVisibility(View.VISIBLE);
 
-			ListBlocksChildAdapter listBlocksChildAdapter = new ListBlocksChildAdapter(R.layout.item_list_blocks_child, item.getTransactions().getData());
-			childRcv.setLayoutManager(new GridLayoutManager(mContext, 5));
-			childRcv.setAdapter(listBlocksChildAdapter);
+            ListBlocksChildAdapter listBlocksChildAdapter = new ListBlocksChildAdapter(R.layout.item_list_blocks_child, item.getTransactions().getData());
+            childRcv.setLayoutManager(new GridLayoutManager(mContext, 5));
+            childRcv.setAdapter(listBlocksChildAdapter);
 
-			helper.getView(R.id.view_more_tv).setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					if (mOnViewMoreClickListener!=null) {
-						mOnViewMoreClickListener.onViewMoreClick(item.getHeight());
-					}
-				}
-			});
+            helper.getView(R.id.view_more_tv).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mOnViewMoreClickListener != null) {
+                        mOnViewMoreClickListener.onViewMoreClick(item.getHeight());
+                    }
+                }
+            });
 
-			LinearLayout isMoreView = helper.getView(R.id.have_more_status_view);
-			if (item.getTransactions().getPage() != null && item.getTransactions().getPage().isNext()) {
+            LinearLayout isMoreView = helper.getView(R.id.have_more_status_view);
+            if (item.getTransactions().getPage() != null && item.getTransactions().getPage().isNext()) {
 
-				TextView lastNumTv = helper.getView(R.id.last_num_tv);
-				int lastNum = item.getTransactions().getPage().getTotal() - 10;
-				lastNumTv.setText(lastNum > 99 ? "99+" : lastNum + "");
+                TextView lastNumTv = helper.getView(R.id.last_num_tv);
+                int lastNum = item.getTransactions().getPage().getTotal() - 10;
+                lastNumTv.setText(lastNum > 99 ? "99+" : lastNum + "");
 
-				isMoreView.setVisibility(View.VISIBLE);
-				int width = ScreenUtils.getScreenWidth();
-				int itemWidth = (width - 12 * ConvertUtils.dp2px(10)) / 5;
-				int itemHeight = itemWidth;
+                isMoreView.setVisibility(View.VISIBLE);
+                int width = ScreenUtils.getScreenWidth();
+                int itemWidth = (width - 12 * ConvertUtils.dp2px(10)) / 5;
+                int itemHeight = itemWidth;
 
-				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(itemWidth, itemHeight);
-				params.setMargins(ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10));
-				isMoreView.setLayoutParams(params);
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(itemWidth, itemHeight);
+                params.setMargins(ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10), ConvertUtils.dp2px(10));
+                isMoreView.setLayoutParams(params);
 
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-					isMoreView.setOutlineProvider(new ViewOutlineProvider() {
-						@Override
-						public void getOutline(View view, Outline outline) {
-							if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-								outline.setRoundRect(new Rect(0, 0, view.getWidth(), view.getHeight()), ConvertUtils.dp2px(5));
-							}
-						}
-					});
-					isMoreView.setTranslationZ(ConvertUtils.dp2px(8));
-				}
-			} else {
-				isMoreView.setVisibility(View.GONE);
-			}
-		}
-	}
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    isMoreView.setOutlineProvider(new ViewOutlineProvider() {
+                        @Override
+                        public void getOutline(View view, Outline outline) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                outline.setRoundRect(new Rect(0, 0, view.getWidth(), view.getHeight()), ConvertUtils.dp2px(5));
+                            }
+                        }
+                    });
+                    isMoreView.setTranslationZ(ConvertUtils.dp2px(8));
+                }
+            } else {
+                isMoreView.setVisibility(View.GONE);
+            }
+        }
+    }
 
-	public interface OnViewMoreClickListener {
-		void onViewMoreClick(int blockHeight);
-	}
+    public interface OnViewMoreClickListener {
+        void onViewMoreClick(int blockHeight);
+    }
 }
