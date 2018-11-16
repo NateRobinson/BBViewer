@@ -21,11 +21,7 @@
  */
 package com.arcblock.btcblockviewer.ui;
 
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.Observer;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.GridLayoutManager;
@@ -35,17 +31,15 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.apollographql.apollo.api.Query;
-import com.apollographql.apollo.api.Response;
 import com.arcblock.btcblockviewer.BtcBlockViewerApp;
 import com.arcblock.btcblockviewer.R;
 import com.arcblock.btcblockviewer.TransactionsOfBlockQuery;
 import com.arcblock.btcblockviewer.adapter.TxsAdapter;
 import com.arcblock.btcblockviewer.type.PageInput;
 import com.arcblock.btcblockviewer.utils.StatusBarUtils;
-import com.arcblock.corekit.ABCoreKitClient;
 import com.arcblock.corekit.CoreKitPagedQuery;
-import com.arcblock.corekit.bean.CoreKitBean;
-import com.arcblock.corekit.bean.CoreKitPagedBean;
+import com.arcblock.corekit.CoreKitPagedQueryResultListener;
+import com.arcblock.corekit.PagedQueryHelper;
 import com.arcblock.corekit.utils.CoreKitDiffUtil;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 
@@ -62,8 +56,8 @@ public class BlockTxsActivity extends AppCompatActivity {
 
     private TxsAdapter mTxsAdapter;
     private List<TransactionsOfBlockQuery.Datum> mTxs = new ArrayList<>();
-    private TransactionsOfBlockQueryHelper mTransactionsOfBlockQueryHelper;
-
+    private PagedQueryHelper<TransactionsOfBlockQuery.Data, TransactionsOfBlockQuery.Datum> mPagedQueryHelper;
+    private CoreKitPagedQuery<TransactionsOfBlockQuery.Data, TransactionsOfBlockQuery.Datum> mCoreKitPagedQuery;
     private int blockHeight;
 
     @Override
@@ -96,7 +90,7 @@ public class BlockTxsActivity extends AppCompatActivity {
         mTxsAdapter.setOnLoadMoreListener(new BaseQuickAdapter.RequestLoadMoreListener() {
             @Override
             public void onLoadMoreRequested() {
-                mTransactionsOfBlockQueryHelper.loadMore();
+                mCoreKitPagedQuery.startLoadMoreQuery();
             }
         }, txsRv);
         mTxsAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
@@ -112,84 +106,77 @@ public class BlockTxsActivity extends AppCompatActivity {
 
         mBlockHeightTv.setText(blockHeight + "");
 
-        // init TransactionsOfBlockQueryHelper
-        mTransactionsOfBlockQueryHelper = new TransactionsOfBlockQueryHelper(this, this, BtcBlockViewerApp.getInstance().abCoreKitClient());
-        mTransactionsOfBlockQueryHelper.setObserve(new Observer<CoreKitPagedBean<List<TransactionsOfBlockQuery.Datum>>>() {
+        mPagedQueryHelper = new PagedQueryHelper<TransactionsOfBlockQuery.Data, TransactionsOfBlockQuery.Datum>() {
             @Override
-            public void onChanged(@Nullable CoreKitPagedBean<List<TransactionsOfBlockQuery.Datum>> coreKitPagedBean) {
-                //1. handle return data
-                if (coreKitPagedBean.getStatus() == CoreKitBean.SUCCESS_CODE) {
-                    if (coreKitPagedBean.getData() != null) {
-                        // new a old list
-                        List<com.arcblock.btcblockviewer.TransactionsOfBlockQuery.Datum> oldList = new ArrayList<>();
-                        oldList.addAll(mTxs);
+            public Query getInitialQuery() {
+                return TransactionsOfBlockQuery.builder().blockHeight(blockHeight).build();
+            }
 
-                        // set mBlocks with new data
-                        mTxs = coreKitPagedBean.getData();
-                        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new CoreKitDiffUtil<>(oldList, mTxs), true);
-                        // need this line , otherwise the update will have no effect
-                        mTxsAdapter.setNewListData(mTxs);
-                        result.dispatchUpdatesTo(mTxsAdapter);
-                    }
+            @Override
+            public Query getLoadMoreQuery() {
+                PageInput pageInput = null;
+                if (!TextUtils.isEmpty(getCursor())) {
+                    pageInput = PageInput.builder().cursor(getCursor()).build();
                 }
+                return TransactionsOfBlockQuery.builder().blockHeight(blockHeight).paging(pageInput).build();
+            }
+
+            @Override
+            public List<TransactionsOfBlockQuery.Datum> map(TransactionsOfBlockQuery.Data data) {
+                if (data.getTransactionsByIndex() != null) {
+                    // set page info to CoreKitPagedHelper
+                    if (data.getTransactionsByIndex().getPage() != null) {
+                        // set is have next flag to CoreKitPagedHelper
+                        setHasMore(data.getTransactionsByIndex().getPage().isNext());
+                        // set new cursor to CoreKitPagedHelper
+                        setCursor(data.getTransactionsByIndex().getPage().getCursor());
+                    }
+                    return data.getTransactionsByIndex().getData();
+                }
+                return null;
+            }
+        };
+
+        mCoreKitPagedQuery = new CoreKitPagedQuery<>(this, BtcBlockViewerApp.getInstance().abCoreKitClient(), mPagedQueryHelper);
+        mCoreKitPagedQuery.setPagedQueryResultListener(new CoreKitPagedQueryResultListener<TransactionsOfBlockQuery.Datum>() {
+            @Override
+            public void onSuccess(List<TransactionsOfBlockQuery.Datum> list) {
+                //1. handle return data
+                // new a old list
+                List<com.arcblock.btcblockviewer.TransactionsOfBlockQuery.Datum> oldList = new ArrayList<>();
+                oldList.addAll(mTxs);
+                // set mBlocks with new data
+                mTxs = list;
+                DiffUtil.DiffResult result = DiffUtil.calculateDiff(new CoreKitDiffUtil<>(oldList, mTxs), true);
+                // need this line , otherwise the update will have no effect
+                mTxsAdapter.setNewListData(mTxs);
+                result.dispatchUpdatesTo(mTxsAdapter);
 
                 //2. view status change and loadMore component need
-                if (mTransactionsOfBlockQueryHelper.isHasMore()) {
+                if (mPagedQueryHelper.isHasMore()) {
                     mTxsAdapter.setEnableLoadMore(true);
                     mTxsAdapter.loadMoreComplete();
                 } else {
                     mTxsAdapter.loadMoreEnd();
                 }
             }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
         });
+
+        mCoreKitPagedQuery.startInitQuery();
     }
 
     @Override
     public void onBackPressed() {
         supportFinishAfterTransition();
-    }
-
-    /**
-     * TransactionsOfBlockQueryHelper for TransactionsOfBlockQuery
-     */
-    private class TransactionsOfBlockQueryHelper extends CoreKitPagedQuery<TransactionsOfBlockQuery.Data, TransactionsOfBlockQuery.Datum> {
-
-        public TransactionsOfBlockQueryHelper(FragmentActivity activity, LifecycleOwner lifecycleOwner, ABCoreKitClient client) {
-            super(activity, lifecycleOwner, client);
-        }
-
-        @Override
-        public List<TransactionsOfBlockQuery.Datum> map(Response<TransactionsOfBlockQuery.Data> dataResponse) {
-            if (dataResponse != null && dataResponse.data().getTransactionsByIndex() != null) {
-                // set page info to CoreKitPagedHelper
-                if (dataResponse.data().getTransactionsByIndex().getPage() != null) {
-                    // set is have next flag to CoreKitPagedHelper
-                    setHasMore(dataResponse.data().getTransactionsByIndex().getPage().isNext());
-                    // set new cursor to CoreKitPagedHelper
-                    setCursor(dataResponse.data().getTransactionsByIndex().getPage().getCursor());
-                }
-                return dataResponse.data().getTransactionsByIndex().getData();
-            }
-            return null;
-        }
-
-        @Override
-        public Query getInitialQuery() {
-            return TransactionsOfBlockQuery.builder().blockHeight(blockHeight).build();
-        }
-
-        @Override
-        public Query getLoadMoreQuery() {
-            PageInput pageInput = null;
-            if (!TextUtils.isEmpty(getCursor())) {
-                pageInput = PageInput.builder().cursor(getCursor()).build();
-            }
-            return TransactionsOfBlockQuery.builder().blockHeight(blockHeight).paging(pageInput).build();
-        }
-
-        @Override
-        public Query getRefreshQuery() {
-            return TransactionsOfBlockQuery.builder().blockHeight(blockHeight).build();
-        }
     }
 }

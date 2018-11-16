@@ -21,29 +21,23 @@
  */
 package com.arcblock.btcblockviewer.ui;
 
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.Observer;
 import android.graphics.Outline;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.apollographql.apollo.api.Query;
-import com.apollographql.apollo.api.Response;
 import com.arcblock.btcblockviewer.BtcBlockViewerApp;
 import com.arcblock.btcblockviewer.R;
 import com.arcblock.btcblockviewer.TransactionByHashQuery;
+import com.arcblock.btcblockviewer.utils.BtcValueUtils;
 import com.arcblock.btcblockviewer.utils.StatusBarUtils;
-import com.arcblock.corekit.ABCoreKitClient;
 import com.arcblock.corekit.CoreKitQuery;
-import com.arcblock.corekit.bean.CoreKitBean;
+import com.arcblock.corekit.CoreKitResultListener;
 import com.blankj.utilcode.util.ConvertUtils;
 
 public class TxsDetailActivity extends AppCompatActivity {
@@ -128,28 +122,33 @@ public class TxsDetailActivity extends AppCompatActivity {
 
     private void initData() {
         hashTv.setText("Txs-" + txsHash);
-        // init TransactionByHashQueryHelper
-        TransactionByHashQueryHelper transactionByHashQueryHelper = new TransactionByHashQueryHelper(this, this, BtcBlockViewerApp.getInstance().abCoreKitClient());
-        transactionByHashQueryHelper.setObserve(new Observer<CoreKitBean<TransactionByHashQuery.TransactionByHash>>() {
+        CoreKitQuery coreKitQuery = new CoreKitQuery(this, BtcBlockViewerApp.getInstance().abCoreKitClient());
+        coreKitQuery.query(TransactionByHashQuery.builder().hash(txsHash).build(), new CoreKitResultListener<TransactionByHashQuery.Data>() {
             @Override
-            public void onChanged(@Nullable CoreKitBean<TransactionByHashQuery.TransactionByHash> transactionByHashCoreKitBean) {
-                if (transactionByHashCoreKitBean != null) {
-                    if (transactionByHashCoreKitBean.getStatus() == CoreKitBean.SUCCESS_CODE) {
-                        com.arcblock.btcblockviewer.TransactionByHashQuery.TransactionByHash transactionByHash = transactionByHashCoreKitBean.getData();
-                        if (transactionByHash != null) {
-                            block_hash_tv.setText(transactionByHash.getBlockHash());
-                            block_height_tv.setText(transactionByHash.getBlockHeight() + "");
-                            size_tv.setText(transactionByHash.getSize() + " Bytes");
-                            virtual_size_tv.setText(transactionByHash.getVirtualSize() + " Bytes");
-                            weight_tv.setText(transactionByHash.getWeight() + "");
-                            input_tv.setText(transactionByHash.getTotal() + " BTC");
-                            output_tv.setText(transactionByHash.getTotal() + " BTC");
-                            input_num_tv.setText(transactionByHash.getNumberInputs() + "");
-                            output_num_tv.setText(transactionByHash.getNumberOutputs() + "");
-                            fees_tv.setText(transactionByHash.getFees() + " BTC");
-                        }
-                    }
+            public void onSuccess(TransactionByHashQuery.Data data) {
+                com.arcblock.btcblockviewer.TransactionByHashQuery.TransactionByHash transactionByHash = data.getTransactionByHash();
+                if (transactionByHash != null) {
+                    block_hash_tv.setText(transactionByHash.getBlockHash());
+                    block_height_tv.setText(transactionByHash.getBlockHeight() + "");
+                    size_tv.setText(transactionByHash.getSize() + " Bytes");
+                    virtual_size_tv.setText(transactionByHash.getVirtualSize() + " Bytes");
+                    weight_tv.setText(transactionByHash.getWeight() + "");
+                    input_tv.setText(BtcValueUtils.formatBtcValue(transactionByHash.getTotal()));
+                    output_tv.setText(BtcValueUtils.formatBtcValue(transactionByHash.getTotal()));
+                    input_num_tv.setText(transactionByHash.getNumberInputs() + "");
+                    output_num_tv.setText(transactionByHash.getNumberOutputs() + "");
+                    fees_tv.setText(BtcValueUtils.formatBtcValue(transactionByHash.getFees()));
                 }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
             }
         });
     }
@@ -157,28 +156,5 @@ public class TxsDetailActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         supportFinishAfterTransition();
-    }
-
-    /**
-     * TransactionByHashQueryHelper for TransactionByHashQuery
-     */
-    private class TransactionByHashQueryHelper extends CoreKitQuery<TransactionByHashQuery.Data, TransactionByHashQuery.TransactionByHash> {
-
-        public TransactionByHashQueryHelper(FragmentActivity activity, LifecycleOwner lifecycleOwner, ABCoreKitClient client) {
-            super(activity, lifecycleOwner, client);
-        }
-
-        @Override
-        public TransactionByHashQuery.TransactionByHash map(Response<TransactionByHashQuery.Data> dataResponse) {
-            if (dataResponse != null && dataResponse.data() != null) {
-                return dataResponse.data().getTransactionByHash();
-            }
-            return null;
-        }
-
-        @Override
-        public Query getQuery() {
-            return TransactionByHashQuery.builder().hash(txsHash).build();
-        }
     }
 }

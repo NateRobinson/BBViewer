@@ -9,6 +9,7 @@ query blocksByHeight($fromHeight: Int!, $toHeight: Int!, $paging: PageInput){
 		  data{
 			hash
 			size
+			total
 		  }
 		  page{
 			next
